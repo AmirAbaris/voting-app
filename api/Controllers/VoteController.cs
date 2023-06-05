@@ -1,8 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+using MongoDB.Driver;
 
 namespace api.Controllers;
 
@@ -90,6 +86,20 @@ public class VoteController : ControllerBase
 
         // Return the winner's information and vote count
         return Ok(new { Winner = winnerCandidate, voteCounts = winner.Value });
+    }
+
+    [HttpGet("list-winners-by-vote-count")]
+    public async Task<ActionResult<IEnumerable<object>>> GetWinnersByVoteCount()
+    {
+        // Get voters
+        List<Voter> voters = await _voterCollection.Find(new BsonDocument()).ToListAsync();
+
+        var winners = voters
+        .GroupBy(voters => voters.SelectedPresidentNationalId)
+        .Select(winner => new {votesFor = winner.Key, voteCount = winner.Count()})
+        .OrderByDescending(winner => winner.voteCount);
+
+        return Ok(winners);
     }
 
     [HttpGet("get-state-votes/{state}")]
