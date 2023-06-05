@@ -94,12 +94,13 @@ public class VoteController : ControllerBase
         // Get voters
         List<Voter> voters = await _voterCollection.Find(new BsonDocument()).ToListAsync();
 
-        var winners = voters
+        // Get and sort candidates
+        var candidates = voters
         .GroupBy(voters => voters.SelectedPresidentNationalId)
-        .Select(winner => new {votesFor = winner.Key, voteCount = winner.Count()})
+        .Select(candidate => new {votesFor = candidate.Key, voteCount = candidate.Count()})
         .OrderByDescending(winner => winner.voteCount);
 
-        return Ok(winners);
+        return Ok(candidates);
     }
 
     [HttpGet("get-state-votes/{state}")]
