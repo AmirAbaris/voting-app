@@ -1,5 +1,3 @@
-using MongoDB.Driver;
-
 namespace api.Controllers;
 
 [ApiController]
@@ -88,7 +86,7 @@ public class VoteController : ControllerBase
         return Ok(new { Winner = winnerCandidate, voteCounts = winner.Value });
     }
 
-    [HttpGet("list-winners-by-vote-count")]
+    [HttpGet("list-candidates-by-vote-count")]
     public async Task<ActionResult<IEnumerable<object>>> GetWinnersByVoteCount()
     {
         // Get voters
@@ -98,7 +96,7 @@ public class VoteController : ControllerBase
         var candidates = voters
         .GroupBy(voters => voters.SelectedPresidentNationalId)
         .Select(candidate => new {votesFor = candidate.Key, voteCount = candidate.Count()})
-        .OrderByDescending(winner => winner.voteCount);
+        .OrderByDescending(candidate => candidate.voteCount);
 
         return Ok(candidates);
     }
