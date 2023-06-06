@@ -19,8 +19,8 @@ public class VoteController : ControllerBase
     public async Task<ActionResult<IEnumerable<int>>> GetCandidateVoteCount(string candidateNationalId)
     {
         // Retrieve the candidate
-        var candidate = await _candidateCollection.Find<PresidentCandidate>(c =>
-        c.CandidateNationalId == candidateNationalId.Trim()).FirstOrDefaultAsync();
+        var candidate = await _candidateCollection.Find<PresidentCandidate>(candidate =>
+        candidate.CandidateNationalId == candidateNationalId.Trim()).FirstOrDefaultAsync();
 
         if (candidate == null)
         {
@@ -54,7 +54,8 @@ public class VoteController : ControllerBase
     public async Task<ActionResult<IEnumerable<object>>> GetWinnerCandidate()
     {
         // Retrive candidates
-        List<PresidentCandidate> candidates = await _candidateCollection.Find(new BsonDocument()).ToListAsync();
+        List<PresidentCandidate> candidates = await _candidateCollection
+        .Find(new BsonDocument()).ToListAsync();
 
         if (!candidates.Any())
         {
@@ -79,8 +80,8 @@ public class VoteController : ControllerBase
         kv.Value).First();
 
         // Retrive the winner's information
-        var winnerCandidate = await _candidateCollection.Find<PresidentCandidate>(c =>
-        c.CandidateNationalId == winner.Key).FirstOrDefaultAsync();
+        var winnerCandidate = await _candidateCollection.Find<PresidentCandidate>(candidate =>
+        candidate.CandidateNationalId == winner.Key).FirstOrDefaultAsync();
 
         // Return the winner's information and vote count
         return Ok(new { Winner = winnerCandidate, voteCounts = winner.Value });
@@ -95,7 +96,7 @@ public class VoteController : ControllerBase
         // Get and sort candidates
         var candidates = voters
         .GroupBy(voters => voters.SelectedPresidentNationalId)
-        .Select(candidate => new {votesFor = candidate.Key, voteCount = candidate.Count()})
+        .Select(candidate => new { votesFor = candidate.Key, voteCount = candidate.Count() })
         .OrderByDescending(candidate => candidate.voteCount);
 
         return Ok(candidates);
@@ -126,5 +127,57 @@ public class VoteController : ControllerBase
         new { State = $"{stateGroup.Key}", VoteCount = stateGroup.Count() }).ToList();
 
         return stateVoteCounts;
+    }
+
+    [HttpGet("get-all-candidates-with-vote-percentage")]
+    public async Task<ActionResult<IEnumerable<object>>> GetAllCandidatesWithVotePercentage()
+    {
+        // Retrive candidates
+        List<PresidentCandidate> candidates = await _candidateCollection
+        .Find(new BsonDocument()).ToListAsync();
+
+        if (!candidates.Any())
+        {
+            return BadRequest("no candidate found");
+        }
+
+        // Retrive  total voters
+        List<Voter> totalVoters = await _voterCollection.Find(new BsonDocument()).ToListAsync();
+
+        if (!totalVoters.Any())
+        {
+            return BadRequest("no voter found");
+        }
+
+        // Count the vote for each candidate
+        List<int> voteCounts = new List<int>();
+        List<PresidentCandidate> presidentCandidates = new List<PresidentCandidate>();
+
+        foreach (var candidate in candidates)
+        {
+            List<Voter> voters = await _voterCollection.Find(v =>
+            v.SelectedPresidentNationalId == candidate.CandidateNationalId).ToListAsync();
+
+            // Count votes
+            int voteCount = voters.Count();
+
+            // Add vote count for each candidate
+            voteCounts.Add(voteCount);
+            presidentCandidates.Add(candidate);
+        }
+
+        // Count all votes
+        int totalVotes = totalVoters.Count();
+
+        // Calc each candidates votes to percentage
+        List<float> percentageResult = new List<float>();
+
+        foreach (float vote in voteCounts)
+        {
+            float result = ((vote / totalVotes) * 100);
+            percentageResult.Add(result);
+        }
+
+        return Ok(new { Candidates = presidentCandidates, Percentages = percentageResult });
     }
 }
