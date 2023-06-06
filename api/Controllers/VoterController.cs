@@ -13,7 +13,6 @@ public class VoterController : ControllerBase
     private readonly IMongoCollection<Voter> _voterCollection;
     private readonly IMongoCollection<PresidentCandidate> _candidateCollection;
 
-    // Dependency Injection
     public VoterController(IMongoClient client, IMongoDbSettings dbSettings)
     {
         var dbName = client.GetDatabase(dbSettings.DatabaseName);
@@ -21,65 +20,67 @@ public class VoterController : ControllerBase
         _candidateCollection = dbName.GetCollection<PresidentCandidate>("president-candidates");
     }
 
+    // Register a new voter
     [HttpPost("register-voter")]
-    async public Task<ActionResult<Voter>> RegisterVoter(Voter voter)
+    async public Task<ActionResult<Voter>> RegisterVoter(Voter voterToRegister)
     {
         // Check if the voter already exists
-        var existingVoter = await _voterCollection.FindAsync<Voter>(v =>
-        v.VoterNationalId == voter.VoterNationalId.Trim());
+        var existingVoter = await _voterCollection.FindAsync(v =>
+            v.VoterNationalId == voterToRegister.VoterNationalId.Trim());
 
         if (existingVoter.Any())
         {
-            return BadRequest("Voter already exist");
+            return BadRequest("Voter already exists");
         }
 
-        // Check if the candidate exists by Id
-        var existingCandidateById = await _candidateCollection.FindAsync<PresidentCandidate>(c =>
-        c.CandidateId == voter.SelectedPresidentById);
+        // Check if candidate ID is valid
+        var existingCandidateById = await _candidateCollection.FindAsync(c =>
+            c.CandidateId == voterToRegister.SelectedPresidentById);
 
         if (!existingCandidateById.Any())
         {
-            return BadRequest("found no candidate by this ID");
+            return BadRequest("No candidate found with this ID");
         }
 
-        // Check if candidate exist by national Id
-        var existingCandidateByNationalId = await _candidateCollection.FindAsync<PresidentCandidate>(c =>
-        c.CandidateNationalId == voter.SelectedPresidentNationalId);
+        // Check if candidate national ID is valid
+        var existingCandidateByNationalId = await _candidateCollection.FindAsync(c =>
+            c.CandidateNationalId == voterToRegister.SelectedPresidentNationalId);
 
         if (!existingCandidateByNationalId.Any())
         {
-            return BadRequest("found no candidate by this National ID");
+            return BadRequest("No candidate found with this National ID");
         }
 
-        // Create a new voter
+        // Create a new voter object
         var newVoter = new Voter(
             VoterId: null,
-            VoterNationalId: voter.VoterNationalId,
-            SelectedPresidentById: voter.SelectedPresidentById,
-            SelectedPresidentNationalId: voter.SelectedPresidentNationalId,
-            FirstName: voter.FirstName,
-            LastName: voter.LastName,
-            Gender: voter.Gender,
-            Age: voter.Age,
+            VoterNationalId: voterToRegister.VoterNationalId,
+            SelectedPresidentById: voterToRegister.SelectedPresidentById,
+            SelectedPresidentNationalId: voterToRegister.SelectedPresidentNationalId,
+            FirstName: voterToRegister.FirstName,
+            LastName: voterToRegister.LastName,
+            Gender: voterToRegister.Gender,
+            Age: voterToRegister.Age,
             Address: new Address(
-                City: voter.Address.City,
-                State: voter.Address.State,
-                Street: voter.Address.Street,
-                ZipCode: voter.Address.ZipCode
+                City: voterToRegister.Address.City,
+                State: voterToRegister.Address.State,
+                Street: voterToRegister.Address.Street,
+                ZipCode: voterToRegister.Address.ZipCode
             )
         );
 
-        // Insert voter into database
+        // Insert the new voter into the database
         await _voterCollection.InsertOneAsync(newVoter);
 
-        // Return created voter
+        // Return the created voter
         return Created("", newVoter);
     }
 
+    // Get a list of voters who voted for a candidate with the specified national ID
     [HttpGet("get-voters-by-candidate-national-id/{nationalId}")]
-    public async Task<ActionResult<IEnumerable<Voter>>> GetVoterByCandidateNationalId(string nationalId)
+    public async Task<ActionResult<IEnumerable<Voter>>> GetVotersByCandidateNationalId(string nationalId)
     {
-        // Check if voters exist
+        // Check if any voters exist for the given candidate national ID
         List<Voter> voters = await _voterCollection.Find(v => v.SelectedPresidentNationalId == nationalId.Trim()).ToListAsync();
 
         if (!voters.Any())
@@ -87,14 +88,15 @@ public class VoterController : ControllerBase
             return NotFound("No matching voters found");
         }
 
-        // Return voters
+        // Return the list of voters
         return Ok(voters);
     }
 
+    // Get a list of voters who voted for a candidate with the specified ID
     [HttpGet("get-voters-by-candidate-id/{id}")]
-    public async Task<ActionResult<IEnumerable<Voter>>> GetVoterByCandidateId(string id)
+    public async Task<ActionResult<IEnumerable<Voter>>> GetVotersByCandidateId(string id)
     {
-        // Check if voters exist
+        // Check if any voters exist for the given candidate ID
         List<Voter> voters = await _voterCollection.Find(v => v.SelectedPresidentById == id.Trim()).ToListAsync();
 
         if (!voters.Any())
@@ -102,18 +104,18 @@ public class VoterController : ControllerBase
             return NotFound("No matching voters found");
         }
 
-        // Return voters with updated counter
+        // Return the list of voters
         return Ok(voters);
     }
 
+    // Get a list of all voters in the database
     [HttpGet("get-all-voters")]
     public async Task<ActionResult<IEnumerable<Voter>>> GetAllVoters()
     {
-        // Retrieve all voters from database
-        List<Voter> voters = await _voterCollection.Find<Voter>(new BsonDocument()).ToListAsync();
+        // Retrieve all voters from the database
+        List<Voter> voters = await _voterCollection.Find(new BsonDocument()).ToListAsync();
 
-        // Return voters
+        // Return the list of voters
         return Ok(voters);
     }
-
 }

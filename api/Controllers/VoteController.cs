@@ -63,7 +63,7 @@ public class VoteController : ControllerBase
         }
 
         // Count the vote for each candidate
-        Dictionary<string, int> voteCounts = new Dictionary<string, int>();
+        var voteCounts = new Dictionary<string, int>();
 
         foreach (var candidate in candidates)
         {
@@ -122,11 +122,13 @@ public class VoteController : ControllerBase
         // Retrive all voters
         List<Voter> voters = await _voterCollection.Find(new BsonDocument()).ToListAsync();
 
+        // Select required content from voters list
         var stateVoteCounts = voters.GroupBy(v =>
         v.Address.State).Select(stateGroup =>
         new { State = $"{stateGroup.Key}", VoteCount = stateGroup.Count() }).ToList();
 
-        return stateVoteCounts;
+        // Return an object of selected content
+        return Ok(stateVoteCounts);
     }
 
     [HttpGet("get-all-candidates-with-vote-percentage")]
@@ -150,27 +152,30 @@ public class VoteController : ControllerBase
         }
 
         // Count the vote for each candidate
-        List<int> voteCounts = new List<int>();
-        List<PresidentCandidate> presidentCandidates = new List<PresidentCandidate>();
+        var voteCounts = new List<int>();
+        var presidentCandidates = new List<PresidentCandidate>();
 
         foreach (var candidate in candidates)
         {
-            List<Voter> voters = await _voterCollection.Find(v =>
+            var voters = await _voterCollection.Find(v =>
             v.SelectedPresidentNationalId == candidate.CandidateNationalId).ToListAsync();
 
             // Count votes
             int voteCount = voters.Count();
 
-            // Add vote count for each candidate
+            // Add vote count to list
             voteCounts.Add(voteCount);
+
+            // Add candidate to list
             presidentCandidates.Add(candidate);
+
         }
 
         // Count all votes
         int totalVotes = totalVoters.Count();
 
         // Calc each candidates votes to percentage
-        List<float> percentageResult = new List<float>();
+        var percentageResult = new List<float>();
 
         foreach (float vote in voteCounts)
         {

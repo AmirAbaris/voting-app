@@ -19,20 +19,19 @@ public class PresidentCandidateController : ControllerBase
         _collection = dbName.GetCollection<PresidentCandidate>("president-candidates");
     }
 
-    // CRUD
     [HttpPost("register-candidate")]
     public async Task<ActionResult<PresidentCandidate>> RegisterCandidate(PresidentCandidate candidate)
     {
-        // Check if candidate exists
-        var candidateExists = await _collection.FindAsync<PresidentCandidate>(c =>
+        // Check if candidate already exists
+        var existingCandidates = await _collection.FindAsync<PresidentCandidate>(c =>
         c.CandidateNationalId == candidate.CandidateNationalId.Trim());
 
-        if (candidateExists.Any())
+        if (existingCandidates.Any())
         {
             return BadRequest("Candidate already exist");
         }
 
-        // Create president candidate
+        // Create a new president candidate
         var newCandidate = new PresidentCandidate(
             CandidateId: null,
             CandidateNationalId: candidate.CandidateNationalId,
@@ -49,7 +48,7 @@ public class PresidentCandidateController : ControllerBase
             )
         );
 
-        // Insert candidate into database
+        // Insert created candidate into database
         await _collection.InsertOneAsync(newCandidate);
 
         // Return created candidate
@@ -90,15 +89,15 @@ public class PresidentCandidateController : ControllerBase
     [HttpGet("get-candidates")]
     public async Task<ActionResult<IEnumerable<PresidentCandidate>>> GetAllCandidates()
     {
-        // Creating a list for candidates
+        // Retrive candidates
         List<PresidentCandidate> candidates = await _collection.Find(new BsonDocument()).ToListAsync();
 
-        // Returning candidates
+        // Return all candidates
         return Ok(candidates);
     }
 
     [HttpPatch("update-candidate-by-national-id/{nationalId}")]
-    public async Task<ActionResult<UpdateResult>> UpdateCandidate(string nationalId, PresidentCandidate candidate)
+    public async Task<ActionResult<UpdateResult>> UpdateCandidate(string nationalId, PresidentCandidate candidateIn)
     {
         // Check if candidate exists
         var candidateExists = await _collection.Find(c => c.CandidateNationalId == nationalId.Trim()).FirstOrDefaultAsync();
@@ -109,19 +108,19 @@ public class PresidentCandidateController : ControllerBase
         }
 
         // Update candidate 
-        var updateResult = Builders<PresidentCandidate>.Update
-        .Set(c => c.FirstName, candidate.FirstName)
-        .Set(c => c.LastName, candidate.LastName)
-        .Set(c => c.Age, candidate.Age)
-        .Set(c => c.Gender, candidate.Gender)
-        .Set(c => c.Party, candidate.Party)
-        .Set(c => c.Address, candidate.Address);
+        var updateCanidate = Builders<PresidentCandidate>.Update
+        .Set(c => c.FirstName, candidateIn.FirstName)
+        .Set(c => c.LastName, candidateIn.LastName)
+        .Set(c => c.Age, candidateIn.Age)
+        .Set(c => c.Gender, candidateIn.Gender)
+        .Set(c => c.Party, candidateIn.Party)
+        .Set(c => c.Address, candidateIn.Address);
 
         // Update candidate in database
-        await _collection.UpdateOneAsync(p => p.CandidateNationalId == nationalId, updateResult);
+        await _collection.UpdateOneAsync(candidate => candidate.CandidateNationalId == nationalId, updateCanidate);
 
-        // Return update result
-        return Ok(updateResult);
+        // Return updated candidate
+        return Ok(updateCanidate);
     }
 
     [HttpDelete("delete-candidate-by-national-id/{nationalId}")]
@@ -130,11 +129,12 @@ public class PresidentCandidateController : ControllerBase
         // Valid input
         if (string.IsNullOrWhiteSpace(nationalId))
         {
-            return BadRequest("National ID must not be null or empty");
+            return BadRequest("National ID should not be null or empty");
         }
 
         // Delete candidate
-        DeleteResult result = await _collection.DeleteOneAsync<PresidentCandidate>(c => c.CandidateNationalId == nationalId.Trim());
+        DeleteResult result = await _collection.DeleteOneAsync<PresidentCandidate>(c =>
+        c.CandidateNationalId == nationalId.Trim());
 
         // Check if candidate exists
         if (result.DeletedCount == 0)
@@ -145,5 +145,4 @@ public class PresidentCandidateController : ControllerBase
         // Return delete result
         return Ok(result);
     }
-
 }
