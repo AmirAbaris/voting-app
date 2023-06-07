@@ -19,7 +19,6 @@ public class PresidentCandidateController : ControllerBase
         // Check if candidate already exists
         var existingCandidates = await _collection.FindAsync<PresidentCandidate>(c =>
         c.CandidateNationalId == candidate.CandidateNationalId.Trim());
-
         if (existingCandidates.Any())
         {
             return BadRequest("Candidate already exist");
@@ -53,9 +52,8 @@ public class PresidentCandidateController : ControllerBase
     public async Task<ActionResult<PresidentCandidate>> GetCandidateByNationalId(string nationalId)
     {
         // Check if candidate exists
-        var candidate = await _collection.Find(c =>
+        var candidate = await _collection.Find<PresidentCandidate>(c =>
         c.CandidateNationalId == nationalId.Trim()).FirstOrDefaultAsync();
-
         if (candidate == null)
         {
             return NotFound("no matching candidate found");
@@ -69,8 +67,8 @@ public class PresidentCandidateController : ControllerBase
     public async Task<ActionResult<PresidentCandidate>> GetCandidateById(string id)
     {
         // Check if candidate exists
-        var candidate = await _collection.Find(c => c.CandidateId == id.Trim()).FirstOrDefaultAsync();
-
+        var candidate = await _collection.Find<PresidentCandidate>(c =>
+        c.CandidateId == id.Trim()).FirstOrDefaultAsync();
         if (candidate == null)
         {
             return NotFound("no matching candidate found");
@@ -94,8 +92,8 @@ public class PresidentCandidateController : ControllerBase
     public async Task<ActionResult<UpdateResult>> UpdateCandidate(string nationalId, PresidentCandidate candidateIn)
     {
         // Check if candidate exists
-        var candidateExists = await _collection.Find(c => c.CandidateNationalId == nationalId.Trim()).FirstOrDefaultAsync();
-
+        var candidateExists = await _collection.Find<PresidentCandidate>(c =>
+        c.CandidateNationalId == nationalId.Trim()).FirstOrDefaultAsync();
         if (candidateExists == null)
         {
             return NotFound("no matching candidate found");
@@ -120,7 +118,7 @@ public class PresidentCandidateController : ControllerBase
     [HttpDelete("delete-candidate-by-national-id/{nationalId}")]
     async public Task<ActionResult<DeleteResult>> DeleteCandidate(string nationalId)
     {
-        // Valid input
+        // Validate input
         if (string.IsNullOrWhiteSpace(nationalId))
         {
             return BadRequest("National ID should not be null or empty");

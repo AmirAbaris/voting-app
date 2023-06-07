@@ -21,7 +21,6 @@ public class VoteController : ControllerBase
         // Retrieve the candidate
         var candidate = await _candidateCollection.Find<PresidentCandidate>(candidate =>
         candidate.CandidateNationalId == candidateNationalId.Trim()).FirstOrDefaultAsync();
-
         if (candidate == null)
         {
             return NotFound("no matching candidate found");
@@ -56,7 +55,6 @@ public class VoteController : ControllerBase
         // Retrive candidates
         List<PresidentCandidate> candidates = await _candidateCollection
         .Find(new BsonDocument()).ToListAsync();
-
         if (!candidates.Any())
         {
             return BadRequest("no candidate found");
@@ -64,7 +62,6 @@ public class VoteController : ControllerBase
 
         // Count the vote for each candidate
         var voteCounts = new Dictionary<string, int>();
-
         foreach (var candidate in candidates)
         {
             List<Voter> voters = await _voterCollection.Find(v =>
@@ -137,7 +134,6 @@ public class VoteController : ControllerBase
         // Retrive candidates
         List<PresidentCandidate> candidates = await _candidateCollection
         .Find(new BsonDocument()).ToListAsync();
-
         if (!candidates.Any())
         {
             return BadRequest("no candidate found");
@@ -145,7 +141,6 @@ public class VoteController : ControllerBase
 
         // Retrive  total voters
         List<Voter> totalVoters = await _voterCollection.Find(new BsonDocument()).ToListAsync();
-
         if (!totalVoters.Any())
         {
             return BadRequest("no voter found");
@@ -154,7 +149,6 @@ public class VoteController : ControllerBase
         // Count the vote for each candidate
         var voteCounts = new List<int>();
         var presidentCandidates = new List<PresidentCandidate>();
-
         foreach (var candidate in candidates)
         {
             var voters = await _voterCollection.Find(v =>
@@ -176,7 +170,6 @@ public class VoteController : ControllerBase
 
         // Calc each candidates votes to percentage
         var percentageResult = new List<float>();
-
         foreach (float vote in voteCounts)
         {
             float result = ((vote / totalVotes) * 100);

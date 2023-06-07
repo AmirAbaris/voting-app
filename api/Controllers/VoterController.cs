@@ -19,27 +19,24 @@ public class VoterController : ControllerBase
     async public Task<ActionResult<Voter>> RegisterVoter(Voter voterToRegister)
     {
         // Check if the voter already exists
-        var existingVoter = await _voterCollection.FindAsync(v =>
+        var existingVoter = await _voterCollection.FindAsync<Voter>(v =>
             v.VoterNationalId == voterToRegister.VoterNationalId.Trim());
-
         if (existingVoter.Any())
         {
             return BadRequest("Voter already exists");
         }
 
         // Check if candidate ID is valid
-        var existingCandidateById = await _candidateCollection.FindAsync(c =>
+        var existingCandidateById = await _candidateCollection.FindAsync<PresidentCandidate>(c =>
             c.CandidateId == voterToRegister.SelectedPresidentById);
-
         if (!existingCandidateById.Any())
         {
             return BadRequest("No candidate found with this ID");
         }
 
         // Check if candidate national ID is valid
-        var existingCandidateByNationalId = await _candidateCollection.FindAsync(c =>
+        var existingCandidateByNationalId = await _candidateCollection.FindAsync<PresidentCandidate>(c =>
             c.CandidateNationalId == voterToRegister.SelectedPresidentNationalId);
-
         if (!existingCandidateByNationalId.Any())
         {
             return BadRequest("No candidate found with this National ID");
@@ -76,7 +73,6 @@ public class VoterController : ControllerBase
     {
         // Check if any voters exist for the given candidate national ID
         List<Voter> voters = await _voterCollection.Find(v => v.SelectedPresidentNationalId == nationalId.Trim()).ToListAsync();
-
         if (!voters.Any())
         {
             return NotFound("No matching voters found");
@@ -92,7 +88,6 @@ public class VoterController : ControllerBase
     {
         // Check if any voters exist for the given candidate ID
         List<Voter> voters = await _voterCollection.Find(v => v.SelectedPresidentById == id.Trim()).ToListAsync();
-
         if (!voters.Any())
         {
             return NotFound("No matching voters found");
