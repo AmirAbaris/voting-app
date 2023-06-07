@@ -61,7 +61,6 @@ export class CandidateComponent implements OnInit {
     });
   }
 
-
   deleteCandidate(nationalId: string): void {
     this.candidateService.deleteCandidateByNationalId(nationalId).subscribe(
       () => {
