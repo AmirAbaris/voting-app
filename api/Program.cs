@@ -1,9 +1,11 @@
+using api.Settings;
+using Microsoft.Extensions.Options;
+using MongoDB.Driver;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 #region MongoDbSettings
-
-///// get values from this file: appsettings.Development.json /////
 // get section
 builder.Services.Configure<MongoDbSettings>(builder.Configuration.GetSection(nameof(MongoDbSettings)));
 
@@ -21,8 +23,13 @@ builder.Services.AddSingleton<IMongoClient>(serviceProvider =>
 
     return new MongoClient(uri.ConnectionString);
 });
-
 #endregion MongoDbSettings
+
+builder.Services.AddCors(options =>
+    {
+        options.AddDefaultPolicy(policy => policy.AllowAnyHeader()
+            .AllowAnyMethod().WithOrigins("http://localhost:4200"));
+    });
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -39,6 +46,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors();
 
 app.UseAuthorization();
 
