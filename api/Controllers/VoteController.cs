@@ -50,38 +50,43 @@ public class VoteController : ControllerBase
     }
 
     [HttpGet("select-winner-candidate")]
-    public async Task<ActionResult<IEnumerable<object>>> GetWinnerCandidate()
+    public async Task<ActionResult<object>> GetWinnerCandidate()
     {
-        // Retrive candidates
-        List<PresidentCandidate> candidates = await _candidateCollection
-        .Find(new BsonDocument()).ToListAsync();
+        // Retrieve candidates and voters
+        var candidates = await _candidateCollection.Find(new BsonDocument()).ToListAsync();
+        var voters = await _voterCollection.Find(new BsonDocument()).ToListAsync();
+
         if (!candidates.Any())
         {
-            return BadRequest("no candidate found");
+            return BadRequest("No candidates found");
         }
 
-        // Count the vote for each candidate
-        var voteCounts = new Dictionary<string, int>();
-        foreach (var candidate in candidates)
+        // Count votes for each candidate
+        var voteCounts = candidates
+            .Where(c => !string.IsNullOrEmpty(c.CandidateNationalId))
+            .ToDictionary(c => c.CandidateNationalId, c => voters.Count(voter => string.Equals(voter.SelectedPresidentNationalId, c.CandidateNationalId)));
+
+        // Find candidates with the most votes
+        var maxVoteCount = voteCounts.Values.Max();
+        var winnerCandidates = voteCounts.Where(kv => kv.Value == maxVoteCount)
+        .Select(kv => kv.Key).ToList();
+
+        if (winnerCandidates.Count != 1)
         {
-            List<Voter> voters = await _voterCollection.Find(v =>
-            v.SelectedPresidentNationalId == candidate.CandidateNationalId).ToListAsync();
+            // Handle ties by returning all tied candidates
+            var tiedCandidates = await _candidateCollection.Find(candidate =>
+                winnerCandidates.Contains(candidate.CandidateNationalId))
+                .ToListAsync();
 
-            int voteCount = voters.Count();
-
-            voteCounts.Add(candidate.CandidateNationalId, voteCount);
+            return Ok(new { Winners = tiedCandidates, VoteCount = maxVoteCount });
         }
 
-        // Find candidate with the most votes
-        KeyValuePair<string, int> winner = voteCounts.OrderByDescending(kv =>
-        kv.Value).First();
-
-        // Retrive the winner's information
+        // Retrieve the winner's information
         var winnerCandidate = await _candidateCollection.Find<PresidentCandidate>(candidate =>
-        candidate.CandidateNationalId == winner.Key).FirstOrDefaultAsync();
+            candidate.CandidateNationalId == winnerCandidates[0]).FirstOrDefaultAsync();
 
         // Return the winner's information and vote count
-        return Ok(new { Winner = winnerCandidate, voteCounts = winner.Value });
+        return Ok(new { Winner = winnerCandidate, VoteCount = maxVoteCount });
     }
 
     [HttpGet("list-candidates-by-vote-count")]

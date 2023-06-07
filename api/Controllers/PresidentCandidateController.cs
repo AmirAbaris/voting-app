@@ -88,31 +88,39 @@ public class PresidentCandidateController : ControllerBase
         return Ok(candidates);
     }
 
-    [HttpPatch("update-candidate-by-national-id/{nationalId}")]
+    [HttpPut("update-candidate-by-national-id/{nationalId}")]
     public async Task<ActionResult<UpdateResult>> UpdateCandidate(string nationalId, PresidentCandidate candidateIn)
     {
         // Check if candidate exists
-        var candidateExists = await _collection.Find<PresidentCandidate>(c =>
-        c.CandidateNationalId == nationalId.Trim()).FirstOrDefaultAsync();
-        if (candidateExists == null)
+        List<PresidentCandidate> candidateExists = await _collection.Find(c =>
+        c.CandidateNationalId == nationalId.Trim()).ToListAsync();
+        if (!candidateExists.Any())
         {
-            return NotFound("no matching candidate found");
+            return NotFound("No matching candidate found");
         }
 
         // Update candidate 
         var updateCanidate = Builders<PresidentCandidate>.Update
-        .Set(c => c.FirstName, candidateIn.FirstName)
-        .Set(c => c.LastName, candidateIn.LastName)
-        .Set(c => c.Age, candidateIn.Age)
-        .Set(c => c.Gender, candidateIn.Gender)
-        .Set(c => c.Party, candidateIn.Party)
-        .Set(c => c.Address, candidateIn.Address);
+            .Set(c => c.FirstName, candidateIn.FirstName)
+            .Set(c => c.LastName, candidateIn.LastName)
+            .Set(c => c.Age, candidateIn.Age)
+            .Set(c => c.Gender, candidateIn.Gender)
+            .Set(c => c.Party, candidateIn.Party)
+            .Set(c => c.Address, candidateIn.Address);
+
+        // Remove CandidateNationalId from updateCanidate
+        // * users can't update national id due to data security
+        updateCanidate = updateCanidate.Unset(c => c.CandidateNationalId);
 
         // Update candidate in database
-        await _collection.UpdateOneAsync(candidate => candidate.CandidateNationalId == nationalId, updateCanidate);
+        UpdateResult result = await _collection.UpdateOneAsync(candidate =>
+        candidate.CandidateNationalId == nationalId, updateCanidate);
+        if (result.ModifiedCount > 0)
+        {
+            return Ok(result);
+        }
 
-        // Return updated candidate
-        return Ok(updateCanidate);
+        return BadRequest("Failed to update candidate");
     }
 
     [HttpDelete("delete-candidate-by-national-id/{nationalId}")]

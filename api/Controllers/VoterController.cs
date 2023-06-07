@@ -72,7 +72,8 @@ public class VoterController : ControllerBase
     public async Task<ActionResult<IEnumerable<Voter>>> GetVotersByCandidateNationalId(string nationalId)
     {
         // Check if any voters exist for the given candidate national ID
-        List<Voter> voters = await _voterCollection.Find(v => v.SelectedPresidentNationalId == nationalId.Trim()).ToListAsync();
+        List<Voter> voters = await _voterCollection.Find(v =>
+        v.SelectedPresidentNationalId == nationalId.Trim()).ToListAsync();
         if (!voters.Any())
         {
             return NotFound("No matching voters found");
