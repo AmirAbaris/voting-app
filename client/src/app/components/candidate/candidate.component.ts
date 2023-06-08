@@ -11,7 +11,7 @@ import { State } from 'src/Enums/State';
   styleUrls: ['./candidate.component.scss']
 })
 export class CandidateComponent implements OnInit {
-  candidates: PresidentCandidate[] = []
+  candidates: PresidentCandidate[] = [];
   newCandidate: PresidentCandidate = {
     candidateNationalId: '',
     firstName: '',
@@ -21,55 +21,53 @@ export class CandidateComponent implements OnInit {
     party: Party.Republican,
     address: {
       city: '',
-      state: State.California,
+      state: State.Hawaii,
       street: '',
       zipCode: ''
     }
   };
+PresidentCandidate: any;
+Gender: any;
+Party: any;
+State: any;
 
-  constructor(private candidateService: CandidateService) { }
+  constructor(private candidateService: CandidateService) {}
 
   ngOnInit(): void {
     this.getAllCandidates();
   }
 
   getAllCandidates(): void {
-    this.candidateService.getAllCandidates()
-      .subscribe((candidate: PresidentCandidate) => {
-        this.candidates.push(candidate);
-      });
-  }  
+    this.candidateService.getAllCandidates().subscribe((candidates) => {
+      this.candidates = candidates;
+    });
+  }
 
   registerCandidate(): void {
     this.candidateService.registerCandidate(this.newCandidate).subscribe((candidate) => {
       console.log('Candidate registered successfully', candidate);
       this.getAllCandidates();
       this.newCandidate = {
-        candidateNationalId: candidate.candidateNationalId,
-        firstName: candidate.firstName,
-        lastName: candidate.lastName,
-        age: candidate.age,
-        gender: candidate.gender,
-        party: candidate.party,
+        candidateNationalId: this.newCandidate.candidateNationalId,
+        firstName: this.newCandidate.firstName,
+        lastName: this.newCandidate.lastName,
+        age: this.newCandidate.age,
+        gender: this.newCandidate.gender,
+        party: this.newCandidate.party,
         address: {
-          city: candidate.address.city,
-          state: candidate.address.state,
-          street: candidate.address.state,
-          zipCode: candidate.address.zipCode
+          city: this.newCandidate.address.city,
+          state: this.newCandidate.address.state,
+          street: this.newCandidate.address.street,
+          zipCode: this.newCandidate.address.zipCode
         }
       };
     });
   }
 
   deleteCandidate(nationalId: string): void {
-    this.candidateService.deleteCandidateByNationalId(nationalId).subscribe(
-      () => {
-        console.log('Candidate deleted successfully');
-        this.getAllCandidates();
-      },
-      (error: any) => {
-        console.log(error);
-      }
-    );
+    this.candidateService.deleteCandidate(nationalId).subscribe(() => {
+      console.log('Candidate deleted successfully');
+      this.getAllCandidates();
+    });
   }
 }

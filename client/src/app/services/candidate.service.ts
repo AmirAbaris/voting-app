@@ -7,48 +7,27 @@ import { PresidentCandidate } from 'src/models/PresidentCandidate';
   providedIn: 'root'
 })
 export class CandidateService {
-  private apiBaseUrl = 'http://localhost:5000/';
+  private baseUrl = 'http://localhost:5000/api/presidentcandidate';
 
-  // Inject httpClient
-  constructor(private httpClient: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
-  // Register a new candidate
-  public registerCandidate(candidate: PresidentCandidate): Observable<PresidentCandidate> {
-    const httpOptions = {
-      headers: new HttpHeaders({ 'Content-Type': 'application/json' })
-    };
-
-    return this.httpClient.post<PresidentCandidate>(this.apiBaseUrl + 'register-candidate', candidate, httpOptions);
+  registerCandidate(candidate: PresidentCandidate): Observable<PresidentCandidate> {
+    return this.http.post<PresidentCandidate>(`${this.baseUrl}/register-candidate`, candidate);
   }
 
-  // Get candidate by national ID
-  public getCandidateByNationalId(nationalId: string): Observable<PresidentCandidate> {
-    return this.httpClient.get<PresidentCandidate>(this.apiBaseUrl + 'get-candidate-by-national-id/' + nationalId);
+  getCandidateByNationalId(nationalId: string): Observable<PresidentCandidate> {
+    return this.http.get<PresidentCandidate>(`${this.baseUrl}/get-candidate-by-national-id/${nationalId}`);
   }
 
-  // Get candidate by ID
-  public getCandidateById(id: string): Observable<PresidentCandidate> {
-    return this.httpClient.get<PresidentCandidate>(this.apiBaseUrl + 'get-candidate-by-id/' + id);
+  getAllCandidates(): Observable<PresidentCandidate[]> {
+    return this.http.get<PresidentCandidate[]>(`${this.baseUrl}/get-candidates`);
   }
 
-  // Get all candidates
-  public getAllCandidates(): Observable<PresidentCandidate> {
-    return this.httpClient.get<PresidentCandidate>(this.apiBaseUrl + 'get-candidates');
+  updateCandidate(nationalId: string, candidate: PresidentCandidate): Observable<any> {
+    return this.http.put(`${this.baseUrl}/update-candidate-by-national-id/${nationalId}`, candidate);
   }
 
-  // Update candidate by national ID
-  public updateCandidateByNationalId(
-    nationalId: string, candidateIn: PresidentCandidate
-  ): Observable<any> {
-    const httpOptions = {
-      headers: new HttpHeaders({ 'Content-Type': 'application/json' })
-    }
-
-    return this.httpClient.put<any>(this.apiBaseUrl + 'update-candidate-by-national-id/' + nationalId, candidateIn, httpOptions);
+  deleteCandidate(nationalId: string): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/delete-candidate-by-national-id/${nationalId}`);
   }
-
-    // Delete candidate by national ID
-    public deleteCandidateByNationalId(nationalId: string): Observable<any> {
-      return this.httpClient.delete<any>(this.apiBaseUrl + 'delete-candidate-by-national-id/' + nationalId);
-    }
 }
