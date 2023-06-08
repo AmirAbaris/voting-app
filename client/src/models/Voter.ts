@@ -4,7 +4,7 @@ import { Address } from "./Address";
 export interface Voter {
     voterId?: string;
     voterNationalId: string;
-    selectedPresidentByID: string;
+    selectedPresidentById: string;
     SelectedPresidentNationalId: string;
     FirstName: string;
     LastName: string;
