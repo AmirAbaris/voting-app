@@ -18,7 +18,7 @@ public class PresidentCandidateController : ControllerBase
     {
         // Check if candidate already exists
         var existingCandidates = await _collection.FindAsync<PresidentCandidate>(c =>
-        c.CandidateNationalId == candidate.CandidateNationalId.Trim());
+            c.CandidateNationalId == candidate.CandidateNationalId.Trim());
         if (existingCandidates.Any())
         {
             return BadRequest("Candidate already exist");
@@ -53,8 +53,8 @@ public class PresidentCandidateController : ControllerBase
     {
         // Check if candidate exists
         var candidate = await _collection.Find<PresidentCandidate>(c =>
-        c.CandidateNationalId == nationalId.Trim()).FirstOrDefaultAsync();
-        if (candidate == null)
+            c.CandidateNationalId == nationalId.Trim()).FirstOrDefaultAsync();
+        if (candidate is null)
         {
             return NotFound("no matching candidate found");
         }
@@ -68,8 +68,8 @@ public class PresidentCandidateController : ControllerBase
     {
         // Check if candidate exists
         var candidate = await _collection.Find<PresidentCandidate>(c =>
-        c.CandidateId == id.Trim()).FirstOrDefaultAsync();
-        if (candidate == null)
+            c.CandidateId == id.Trim()).FirstOrDefaultAsync();
+        if (candidate is null)
         {
             return NotFound("no matching candidate found");
         }
@@ -93,7 +93,7 @@ public class PresidentCandidateController : ControllerBase
     {
         // Check if candidate exists
         List<PresidentCandidate> candidateExists = await _collection.Find(c =>
-        c.CandidateNationalId == nationalId.Trim()).ToListAsync();
+            c.CandidateNationalId == nationalId.Trim()).ToListAsync();
         if (!candidateExists.Any())
         {
             return NotFound("No matching candidate found");
@@ -114,7 +114,7 @@ public class PresidentCandidateController : ControllerBase
 
         // Update candidate in database
         UpdateResult result = await _collection.UpdateOneAsync(candidate =>
-        candidate.CandidateNationalId == nationalId, updateCanidate);
+            candidate.CandidateNationalId == nationalId, updateCanidate);
         if (result.ModifiedCount > 0)
         {
             return Ok(result);

@@ -21,7 +21,7 @@ public class VoteController : ControllerBase
         // Retrieve the candidate
         var candidate = await _candidateCollection.Find<PresidentCandidate>(candidate =>
         candidate.CandidateNationalId == candidateNationalId.Trim()).FirstOrDefaultAsync();
-        if (candidate == null)
+        if (candidate is null)
         {
             return NotFound("no matching candidate found");
         }
